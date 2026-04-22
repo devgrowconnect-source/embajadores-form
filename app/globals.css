@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --bg-dark: #09182a;
+  --bg-card: #0d2137;
+  --border-color: #1a3554;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: white;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #00d4ff, #00c46e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-btn {
+  background: linear-gradient(135deg, #00b4d8, #00c46e);
+  transition: opacity 0.2s, transform 0.1s;
+}
+.gradient-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.gradient-btn:active { transform: translateY(0); }
+
+.rating-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: transparent;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rating-btn:hover { border-color: #00b4d8; color: #00d4ff; }
+.rating-btn.selected {
+  background: linear-gradient(135deg, #00b4d8, #00c46e);
+  border-color: transparent;
+  color: white;
+}
+
+.section-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.section-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00b4d8, #00c46e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.participant-radio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: transparent;
+  color: white;
+}
+.participant-radio:hover { border-color: #00b4d8; }
+.participant-radio.selected {
+  border-color: #00c46e;
+  background: rgba(0, 196, 110, 0.08);
+}
+
+.open-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: white;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 88px;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.open-textarea:focus { outline: none; border-color: #00b4d8; }
+.open-textarea::placeholder { color: #3a5570; }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 1.25rem 0;
+}
