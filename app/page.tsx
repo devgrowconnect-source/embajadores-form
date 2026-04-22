@@ -24,51 +24,37 @@ const INITIAL: FormData = {
   s7_1: "", s7_2: "", s7_3: "",
 };
 
-const SAT_LABELS: Record<number, string> = {
-  1: "Muy insatisfecho", 2: "Insatisfecho", 3: "Neutral",
-  4: "Satisfecho", 5: "Muy satisfecho",
-};
+const SAT_OPTIONS = [
+  { val: 5, label: "Muy satisfecho" },
+  { val: 4, label: "Satisfecho" },
+  { val: 3, label: "Neutral" },
+  { val: 2, label: "Insatisfecho" },
+  { val: 1, label: "Muy insatisfecho" },
+];
 
-function RatingScale({ value, onChange, labels }: {
-  value: number;
-  onChange: (v: number) => void;
-  labels?: Record<number, string>;
-}) {
+function RatingScale({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex flex-wrap gap-3 mt-3">
+    <div className="rating-row">
+      <span className="rating-tag">Malo</span>
       {[1, 2, 3, 4, 5].map((n) => (
-        <div key={n} className="flex flex-col items-center gap-1">
-          <button
-            type="button"
-            onClick={() => onChange(n)}
-            className={`rating-btn${value === n ? " selected" : ""}`}
-          >
-            {n}
-          </button>
-          {labels && (
-            <span className="text-xs text-center leading-tight" style={{ color: "#4a6a8a", maxWidth: 68 }}>
-              {labels[n]}
-            </span>
-          )}
-        </div>
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          className={`rating-btn${value === n ? " active" : ""}`}
+        >
+          {n}
+        </button>
       ))}
+      <span className="rating-tag right">Excelente</span>
     </div>
   );
 }
 
-function SectionHeader({ number, title }: { number: string; title: string }) {
+function Question({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <div className="section-badge">{number}</div>
-      <h2 className="text-lg font-semibold text-white">{title}</h2>
-    </div>
-  );
-}
-
-function Q({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="py-4">
-      <p className="text-sm font-medium" style={{ color: "#94a3b8" }}>{label}</p>
+    <div>
+      <p className="q-label">{label}</p>
       {children}
     </div>
   );
@@ -116,38 +102,41 @@ export default function EncuestaPage() {
   }
 
   return (
-    <main style={{ background: "var(--bg-dark)", minHeight: "100vh" }}>
-      {/* Sticky header */}
-      <header
-        className="sticky top-0 z-50 backdrop-blur-sm"
-        style={{ borderBottom: "1px solid var(--border-color)", background: "rgba(9,24,42,0.95)" }}
-      >
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-3">
-          <Image src="/logo.jpeg" alt="Plan Embajadores" width={44} height={44} className="rounded-lg object-cover" />
-          <div>
-            <p className="font-bold text-sm leading-tight text-white">PLAN EMBAJADORES</p>
-            <p className="text-xs leading-tight" style={{ color: "#4a7a9b" }}>Conquistando el Punto de Venta</p>
-          </div>
-        </div>
-      </header>
+    <main style={{ background: "var(--page-bg)", minHeight: "100vh" }}>
 
-      {/* Hero */}
-      <div className="max-w-3xl mx-auto px-6 pt-12 pb-8 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-3">
-          <span className="gradient-text">Encuesta de Satisfacción</span>
+      {/* ── Navbar ── */}
+      <nav style={{ background: "var(--navy)", borderBottom: "3px solid var(--accent)" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+          <Image src="/logo.jpeg" alt="Plan Embajadores" width={32} height={32} style={{ borderRadius: 4, objectFit: "cover" }} />
+          <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.95rem", letterSpacing: "0.04em" }}>
+            PLAN EMBAJADORES
+          </span>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "36px 20px 20px" }}>
+        <p style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
+          Encuesta de Satisfacción
+        </p>
+        <h1 style={{ fontSize: "2rem", fontWeight: 700, lineHeight: 1.15, color: "var(--text-dark)", marginBottom: 12, letterSpacing: "-0.02em" }}>
+          Conquistando el<br />Punto de Venta
         </h1>
-        <p className="text-base max-w-lg mx-auto" style={{ color: "#64849e" }}>
-          Tu opinión nos ayuda a mejorar el Plan Embajadores. La encuesta toma menos de 3 minutos.
+        <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: 380 }}>
+          Tu opinión es fundamental para seguir fortaleciendo nuestra alianza estratégica.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-6 pb-16 flex flex-col gap-6">
+      <form
+        onSubmit={handleSubmit}
+        style={{ maxWidth: 680, margin: "0 auto", padding: "0 20px 60px", display: "flex", flexDirection: "column", gap: 12 }}
+      >
 
-        {/* 1 – Perfil */}
-        <div className="section-card">
-          <SectionHeader number="1" title="Perfil del participante" />
-          <p className="text-sm mb-4" style={{ color: "#94a3b8" }}>¿Cuál es tu rol en el negocio?</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* ── 1. Perfil ── */}
+        <div className="card">
+          <p className="section-title">Perfil del participante</p>
+          <p className="section-sub">Seleccione su rol actual dentro del establecimiento.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {([
               { val: "dueno", label: "Dueño / Administrador" },
               { val: "dependiente", label: "Dependiente" },
@@ -156,132 +145,144 @@ export default function EncuestaPage() {
                 key={val}
                 type="button"
                 onClick={() => set("participante", val)}
-                className={`participant-radio${form.participante === val ? " selected" : ""}`}
+                className={`radio-option${form.participante === val ? " active" : ""}`}
               >
-                <span
-                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
-                  style={{
-                    borderColor: form.participante === val ? "#00c46e" : "#1a3554",
-                    background: form.participante === val ? "#00c46e" : "transparent",
-                  }}
-                >
-                  {form.participante === val && <span className="w-2 h-2 rounded-full bg-white block" />}
+                <span className="radio-dot">
+                  {form.participante === val && <span className="radio-dot-inner" />}
                 </span>
-                <span className="text-sm font-medium">{label}</span>
+                {label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* 2 – Presentación */}
-        <div className="section-card">
-          <SectionHeader number="2" title="Presentación y mecánica del plan de beneficios" />
-          <p className="text-xs mb-1" style={{ color: "#4a6a8a" }}>Califica del 1 al 5 &nbsp;·&nbsp; 1 = muy bajo &nbsp;·&nbsp; 5 = excelente</p>
-          <Q label="2.1 Claridad en la explicación del plan de beneficios">
-            <RatingScale value={form.s2_1} onChange={(v) => set("s2_1", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="2.2 Facilidad para participar en el plan de beneficios">
-            <RatingScale value={form.s2_2} onChange={(v) => set("s2_2", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="2.3 Comprensión en las reglas y condiciones">
-            <RatingScale value={form.s2_3} onChange={(v) => set("s2_3", v)} />
-          </Q>
+        {/* ── 2. Presentación ── */}
+        <div className="card">
+          <p className="section-title">Presentación y mecánica del plan</p>
+          <p className="section-sub">Califique de 1 (Malo) a 5 (Excelente) los siguientes aspectos.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <Question label="¿Qué tan clara fue la explicación inicial del plan?">
+              <RatingScale value={form.s2_1} onChange={(v) => set("s2_1", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="¿Qué tan fácil es participar en el plan de beneficios?">
+              <RatingScale value={form.s2_2} onChange={(v) => set("s2_2", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="¿Comprende claramente las reglas y condiciones?">
+              <RatingScale value={form.s2_3} onChange={(v) => set("s2_3", v)} />
+            </Question>
+          </div>
         </div>
 
-        {/* 3 – Equipo */}
-        <div className="section-card">
-          <SectionHeader number="3" title="Equipo y acompañamiento" />
-          <p className="text-xs mb-1" style={{ color: "#4a6a8a" }}>Califica del 1 al 5 &nbsp;·&nbsp; 1 = muy bajo &nbsp;·&nbsp; 5 = excelente</p>
-          <Q label="3.1 Gestión del transferencista">
-            <RatingScale value={form.s3_1} onChange={(v) => set("s3_1", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="3.2 Experiencia del coordinador">
-            <RatingScale value={form.s3_2} onChange={(v) => set("s3_2", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="3.3 Servicio al cliente">
-            <RatingScale value={form.s3_3} onChange={(v) => set("s3_3", v)} />
-          </Q>
+        {/* ── 3. Equipo ── */}
+        <div className="card">
+          <p className="section-title">Equipo y acompañamiento</p>
+          <p className="section-sub">Califique de 1 (Malo) a 5 (Excelente) el soporte recibido.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <Question label="Disponibilidad de su asesor asignado">
+              <RatingScale value={form.s3_1} onChange={(v) => set("s3_1", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="Experiencia y conocimiento del coordinador">
+              <RatingScale value={form.s3_2} onChange={(v) => set("s3_2", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="Calidad del servicio al cliente">
+              <RatingScale value={form.s3_3} onChange={(v) => set("s3_3", v)} />
+            </Question>
+          </div>
         </div>
 
-        {/* 4 – Comunicación */}
-        <div className="section-card">
-          <SectionHeader number="4" title="Comunicación y gestión" />
-          <p className="text-xs mb-1" style={{ color: "#4a6a8a" }}>Califica del 1 al 5 &nbsp;·&nbsp; 1 = muy bajo &nbsp;·&nbsp; 5 = excelente</p>
-          <Q label="4.1 Claridad de la información (cambios, novedades)">
-            <RatingScale value={form.s4_1} onChange={(v) => set("s4_1", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="4.2 Frecuencia de comunicación">
-            <RatingScale value={form.s4_2} onChange={(v) => set("s4_2", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="4.3 Facilidad para resolver dudas">
-            <RatingScale value={form.s4_3} onChange={(v) => set("s4_3", v)} />
-          </Q>
+        {/* ── 4. Comunicación ── */}
+        <div className="card">
+          <p className="section-title">Comunicación y gestión</p>
+          <p className="section-sub">Frecuencia y calidad de la información compartida.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <Question label="¿Recibe la información sobre cambios y novedades a tiempo?">
+              <RatingScale value={form.s4_1} onChange={(v) => set("s4_1", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="¿Con qué frecuencia se comunica el equipo con usted?">
+              <RatingScale value={form.s4_2} onChange={(v) => set("s4_2", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="¿Qué tan fácil es resolver sus dudas con el equipo?">
+              <RatingScale value={form.s4_3} onChange={(v) => set("s4_3", v)} />
+            </Question>
+          </div>
         </div>
 
-        {/* 5 – Pagos */}
-        <div className="section-card">
-          <SectionHeader number="5" title="Pagos e incentivos" />
-          <p className="text-xs mb-1" style={{ color: "#4a6a8a" }}>Califica del 1 al 5 &nbsp;·&nbsp; 1 = muy bajo &nbsp;·&nbsp; 5 = excelente</p>
-          <Q label="5.1 Cumplimiento en los pagos">
-            <RatingScale value={form.s5_1} onChange={(v) => set("s5_1", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="5.2 Claridad en la liquidación de incentivos">
-            <RatingScale value={form.s5_2} onChange={(v) => set("s5_2", v)} />
-          </Q>
-          <hr className="divider" />
-          <Q label="5.3 Atractivo de los incentivos">
-            <RatingScale value={form.s5_3} onChange={(v) => set("s5_3", v)} />
-          </Q>
+        {/* ── 5. Pagos ── */}
+        <div className="card">
+          <p className="section-title">Pagos e incentivos</p>
+          <p className="section-sub">Evaluación de la puntualidad y monto de incentivos.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <Question label="Cumplimiento en los pagos">
+              <RatingScale value={form.s5_1} onChange={(v) => set("s5_1", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="Claridad en la liquidación de incentivos">
+              <RatingScale value={form.s5_2} onChange={(v) => set("s5_2", v)} />
+            </Question>
+            <hr className="q-divider" />
+            <Question label="Atractivo de los incentivos ofrecidos">
+              <RatingScale value={form.s5_3} onChange={(v) => set("s5_3", v)} />
+            </Question>
+          </div>
         </div>
 
-        {/* 6 – Impacto */}
-        <div className="section-card">
-          <SectionHeader number="6" title="Impacto del plan" />
-          <Q label="6.1 En general, ¿qué tan satisfecho estás con el Plan Embajadores?">
-            <RatingScale value={form.s6_satisfaccion} onChange={(v) => set("s6_satisfaccion", v)} labels={SAT_LABELS} />
-          </Q>
+        {/* ── 6. Impacto ── */}
+        <div className="card">
+          <p className="section-title">Impacto del plan</p>
+          <p className="section-sub">Nivel de satisfacción general con el programa.</p>
+          <div className="sat-bar" />
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+            <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-light)" }}>Muy insatisfecho</span>
+            <span style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-light)" }}>Muy satisfecho</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {SAT_OPTIONS.map(({ val, label }) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => set("s6_satisfaccion", val)}
+                className={`sat-option${form.s6_satisfaccion === val ? " active" : ""}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* 7 – Abiertas */}
-        <div className="section-card">
-          <SectionHeader number="7" title="Preguntas abiertas" />
-          <div className="flex flex-col gap-5">
+        {/* ── 7. Abiertas ── */}
+        <div className="card">
+          <p className="section-title">Comentarios adicionales</p>
+          <p className="section-sub">Sus sugerencias nos ayudan a mejorar continuamente.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div>
-              <p className="text-sm font-medium mb-2" style={{ color: "#94a3b8" }}>
-                7.1 ¿Qué es lo que más valoras del Plan Embajadores?
-              </p>
+              <p className="q-label">¿Qué es lo que más le gusta del Plan Embajadores?</p>
               <textarea
                 className="open-textarea"
-                placeholder="Escribe tu respuesta aquí..."
+                placeholder="Escriba su respuesta aquí..."
                 value={form.s7_1}
                 onChange={(e) => set("s7_1", e.target.value)}
               />
             </div>
             <div>
-              <p className="text-sm font-medium mb-2" style={{ color: "#94a3b8" }}>
-                7.2 ¿Qué es lo que menos te gusta o te genera dificultad en el plan?
-              </p>
+              <p className="q-label">¿Qué aspectos cree que deberíamos mejorar?</p>
               <textarea
                 className="open-textarea"
-                placeholder="Escribe tu respuesta aquí..."
+                placeholder="Escriba su respuesta aquí..."
                 value={form.s7_2}
                 onChange={(e) => set("s7_2", e.target.value)}
               />
             </div>
             <div>
-              <p className="text-sm font-medium mb-2" style={{ color: "#94a3b8" }}>
-                7.3 Si pudieras mejorar una sola cosa del plan, ¿cuál sería?
-              </p>
+              <p className="q-label">Otros comentarios o sugerencias</p>
               <textarea
                 className="open-textarea"
-                placeholder="Escribe tu respuesta aquí..."
+                placeholder="Escriba su respuesta aquí..."
                 value={form.s7_3}
                 onChange={(e) => set("s7_3", e.target.value)}
               />
@@ -289,23 +290,23 @@ export default function EncuestaPage() {
           </div>
         </div>
 
-        {error && (
-          <div
-            className="rounded-xl px-5 py-4 text-sm"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#fca5a5" }}
-          >
-            {error}
-          </div>
-        )}
+        {error && <div className="error-banner">{error}</div>}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="gradient-btn w-full py-4 rounded-2xl text-white font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button type="submit" disabled={submitting} className="submit-btn">
           {submitting ? "Enviando..." : "Enviar encuesta →"}
         </button>
       </form>
+
+      {/* ── Footer ── */}
+      <footer style={{ background: "var(--navy)", padding: "28px 20px", textAlign: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 12 }}>
+          <Image src="/logo.jpeg" alt="Plan Embajadores" width={28} height={28} style={{ borderRadius: 4, objectFit: "cover" }} />
+          <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.04em" }}>PLAN EMBAJADORES</span>
+        </div>
+        <p style={{ color: "#4a6a8a", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
+          © 2025 PLAN EMBAJADORES · TODOS LOS DERECHOS RESERVADOS
+        </p>
+      </footer>
     </main>
   );
 }

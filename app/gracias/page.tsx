@@ -3,36 +3,60 @@ import Link from "next/link";
 
 export default function GraciasPage() {
   return (
-    <main
-      style={{ background: "var(--bg-dark)", minHeight: "100vh" }}
-      className="flex flex-col items-center justify-center px-6 text-center"
-    >
-      <Image src="/logo.jpeg" alt="Plan Embajadores" width={80} height={80} className="rounded-2xl mb-8 object-cover" />
+    <main style={{ background: "var(--page-bg)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Nav */}
+      <nav style={{ background: "var(--navy)", borderBottom: "3px solid var(--accent)" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+          <Image src="/logo.jpeg" alt="Plan Embajadores" width={32} height={32} style={{ borderRadius: 4, objectFit: "cover" }} />
+          <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.95rem", letterSpacing: "0.04em" }}>
+            PLAN EMBAJADORES
+          </span>
+        </div>
+      </nav>
 
-      {/* Checkmark */}
-      <div
-        className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-        style={{ background: "rgba(0,196,110,0.12)", border: "2px solid rgba(0,196,110,0.4)" }}
-      >
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-          <path d="M10 21L17 28L30 14" stroke="#00c46e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      {/* Content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", textAlign: "center" }}>
+        {/* Check icon */}
+        <div style={{
+          width: 72, height: 72, background: "#E8FBF2",
+          border: "2px solid var(--accent)", display: "flex",
+          alignItems: "center", justifyContent: "center", marginBottom: 28,
+        }}>
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path d="M8 19L15 26L28 11" stroke="#00C46E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+
+        <p style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
+          Encuesta completada
+        </p>
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "var(--text-dark)", marginBottom: 12, letterSpacing: "-0.02em" }}>
+          ¡Gracias por tu respuesta!
+        </h1>
+        <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: 340, marginBottom: 36 }}>
+          Tu opinión fue registrada exitosamente. Nos ayuda a seguir mejorando el Plan Embajadores.
+        </p>
+
+        <Link
+          href="/"
+          style={{
+            display: "inline-block", padding: "12px 28px",
+            border: "1px solid var(--border)", background: "#fff",
+            color: "var(--text-mid)", fontSize: "0.85rem", fontWeight: 600,
+            textDecoration: "none", letterSpacing: "0.02em",
+            transition: "border-color 0.12s",
+          }}
+        >
+          Volver al inicio
+        </Link>
       </div>
 
-      <h1 className="text-3xl font-bold mb-3">
-        <span className="gradient-text">¡Gracias por tu respuesta!</span>
-      </h1>
-      <p className="text-base max-w-sm" style={{ color: "#64849e" }}>
-        Tu opinión fue registrada exitosamente. Nos ayuda a seguir mejorando el Plan Embajadores.
-      </p>
-
-      <Link
-        href="/"
-        className="mt-10 px-8 py-3 rounded-full text-sm font-semibold"
-        style={{ border: "1px solid var(--border-color)", color: "#94a3b8" }}
-      >
-        Volver al inicio
-      </Link>
+      {/* Footer */}
+      <footer style={{ background: "var(--navy)", padding: "24px 20px", textAlign: "center" }}>
+        <p style={{ color: "#4a6a8a", fontSize: "0.72rem", letterSpacing: "0.04em" }}>
+          © 2025 PLAN EMBAJADORES · TODOS LOS DERECHOS RESERVADOS
+        </p>
+      </footer>
     </main>
   );
 }
