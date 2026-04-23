@@ -136,6 +136,9 @@ export default function EncuestaPage() {
         <p style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
           Encuesta de Satisfacción
         </p>
+        <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+          Tu opinión es fundamental para seguir fortaleciendo nuestra alianza estratégica.
+        </p>
       </div>
 
       <form
