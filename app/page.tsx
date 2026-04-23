@@ -83,12 +83,15 @@ export default function EncuestaPage() {
 
   const isValid =
     form.participante !== "" &&
-    requiredRatings.every((k) => (form[k] as number) > 0);
+    requiredRatings.every((k) => (form[k] as number) > 0) &&
+    form.s7_1.trim() !== "" &&
+    form.s7_2.trim() !== "" &&
+    form.s7_3.trim() !== "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isValid) {
-      setError("Por favor completa tu perfil y todas las preguntas de calificación.");
+      setError("Por favor completa tu perfil, todas las calificaciones y los comentarios adicionales.");
       return;
     }
     setError("");
@@ -275,7 +278,7 @@ export default function EncuestaPage() {
           <p className="section-sub">Sus sugerencias nos ayudan a mejorar continuamente.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div>
-              <p className="q-label">¿Qué es lo que más le gusta del Plan Embajadores?</p>
+              <p className="q-label">¿Qué es lo que más le gusta del Plan Embajadores? <span style={{ color: "var(--accent)" }}>*</span></p>
               <textarea
                 className="open-textarea"
                 placeholder="Escriba su respuesta aquí..."
@@ -284,7 +287,7 @@ export default function EncuestaPage() {
               />
             </div>
             <div>
-              <p className="q-label">¿Qué aspectos cree que deberíamos mejorar?</p>
+              <p className="q-label">¿Qué aspectos cree que deberíamos mejorar? <span style={{ color: "var(--accent)" }}>*</span></p>
               <textarea
                 className="open-textarea"
                 placeholder="Escriba su respuesta aquí..."
@@ -293,7 +296,7 @@ export default function EncuestaPage() {
               />
             </div>
             <div>
-              <p className="q-label">Otros comentarios o sugerencias</p>
+              <p className="q-label">Otros comentarios o sugerencias <span style={{ color: "var(--accent)" }}>*</span></p>
               <textarea
                 className="open-textarea"
                 placeholder="Escriba su respuesta aquí..."
