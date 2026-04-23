@@ -75,6 +75,12 @@ export default function EncuestaPage() {
     "s4_1","s4_2","s4_3","s5_1","s5_2","s5_3","s6_satisfaccion",
   ];
 
+  const totalRequired = requiredRatings.length + 1; // +1 for participante
+  const filled =
+    (form.participante !== "" ? 1 : 0) +
+    requiredRatings.filter((k) => (form[k] as number) > 0).length;
+  const progress = Math.round((filled / totalRequired) * 100);
+
   const isValid =
     form.participante !== "" &&
     requiredRatings.every((k) => (form[k] as number) > 0);
@@ -105,12 +111,23 @@ export default function EncuestaPage() {
     <main style={{ background: "var(--page-bg)", minHeight: "100vh" }}>
 
       {/* ── Navbar ── */}
-      <nav style={{ background: "var(--navy)", borderBottom: "3px solid var(--accent)" }}>
+      <nav style={{ background: "var(--navy)", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 680, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
           <Image src="/logo.jpeg" alt="Plan Embajadores" width={32} height={32} style={{ borderRadius: 4, objectFit: "cover" }} />
           <span style={{ color: "#fff", fontWeight: 700, fontSize: "0.95rem", letterSpacing: "0.04em" }}>
             PLAN EMBAJADORES
           </span>
+        </div>
+        {/* Progress bar */}
+        <div style={{ height: 3, background: "rgba(255,255,255,0.1)" }}>
+          <div
+            style={{
+              height: "100%",
+              width: `${progress}%`,
+              background: "var(--accent)",
+              transition: "width 0.4s ease",
+            }}
+          />
         </div>
       </nav>
 
@@ -118,12 +135,6 @@ export default function EncuestaPage() {
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "36px 20px 20px" }}>
         <p style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
           Encuesta de Satisfacción
-        </p>
-        <h1 style={{ fontSize: "2rem", fontWeight: 700, lineHeight: 1.15, color: "var(--text-dark)", marginBottom: 12, letterSpacing: "-0.02em" }}>
-          Conquistando el<br />Punto de Venta
-        </h1>
-        <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6, maxWidth: 380 }}>
-          Tu opinión es fundamental para seguir fortaleciendo nuestra alianza estratégica.
         </p>
       </div>
 
