@@ -222,3 +222,37 @@ body {
   border-top: 1px solid var(--border-light);
   margin: 14px 0;
 }
+
+/* Checkbox multi-select options */
+.check-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+.check-option:hover { border-color: var(--accent); }
+.check-option.active {
+  border-color: var(--accent);
+  background: #F0FBF5;
+  font-weight: 500;
+}
+.check-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.check-option.active .check-box {
+  border-color: var(--accent);
+  background: var(--accent);
+}

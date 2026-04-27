@@ -12,6 +12,8 @@ type FormData = {
   s5_1: number; s5_2: number; s5_3: number;
   s6_satisfaccion: number;
   s7_1: string; s7_2: string; s7_3: string;
+  s8_contacto: string[];
+  s9_apoyo_reportes: "" | "si" | "no";
 };
 
 const INITIAL: FormData = {
@@ -22,7 +24,16 @@ const INITIAL: FormData = {
   s5_1: 0, s5_2: 0, s5_3: 0,
   s6_satisfaccion: 0,
   s7_1: "", s7_2: "", s7_3: "",
+  s8_contacto: [],
+  s9_apoyo_reportes: "",
 };
+
+const CONTACTO_OPTIONS = [
+  { val: "telefono", label: "Teléfono" },
+  { val: "whatsapp", label: "WhatsApp" },
+  { val: "correo", label: "Correo electrónico" },
+  { val: "presencial", label: "Presencial" },
+];
 
 const SAT_OPTIONS = [
   { val: 5, label: "Muy satisfecho" },
@@ -70,15 +81,26 @@ export default function EncuestaPage() {
     setForm((prev) => ({ ...prev, [key]: val }));
   }, []);
 
+  const toggleContacto = useCallback((val: string) => {
+    setForm((prev) => ({
+      ...prev,
+      s8_contacto: prev.s8_contacto.includes(val)
+        ? prev.s8_contacto.filter((v) => v !== val)
+        : [...prev.s8_contacto, val],
+    }));
+  }, []);
+
   const requiredRatings: (keyof FormData)[] = [
     "s2_1","s2_2","s2_3","s3_1","s3_2","s3_3",
     "s4_1","s4_2","s4_3","s5_1","s5_2","s5_3","s6_satisfaccion",
   ];
 
-  const totalRequired = requiredRatings.length + 1; // +1 for participante
+  const totalRequired = requiredRatings.length + 3; // participante + s8 + s9
   const filled =
     (form.participante !== "" ? 1 : 0) +
-    requiredRatings.filter((k) => (form[k] as number) > 0).length;
+    requiredRatings.filter((k) => (form[k] as number) > 0).length +
+    (form.s8_contacto.length > 0 ? 1 : 0) +
+    (form.s9_apoyo_reportes !== "" ? 1 : 0);
   const progress = Math.round((filled / totalRequired) * 100);
 
   const isValid =
@@ -86,7 +108,9 @@ export default function EncuestaPage() {
     requiredRatings.every((k) => (form[k] as number) > 0) &&
     form.s7_1.trim() !== "" &&
     form.s7_2.trim() !== "" &&
-    form.s7_3.trim() !== "";
+    form.s7_3.trim() !== "" &&
+    form.s8_contacto.length > 0 &&
+    form.s9_apoyo_reportes !== "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -304,6 +328,73 @@ export default function EncuestaPage() {
                 onChange={(e) => set("s7_3", e.target.value)}
               />
             </div>
+          </div>
+        </div>
+
+        {/* ── 8. Preferencias ── */}
+        <div className="card">
+          <p className="section-title">Preferencias de atención</p>
+          <p className="section-sub">Ayúdenos a mejorar la forma en que nos comunicamos con usted.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+            {/* Canal de atención */}
+            <div>
+              <p className="q-label">
+                ¿Por qué medio le gustaría recibir la atención del plan?{" "}
+                <span style={{ color: "var(--accent)" }}>*</span>
+              </p>
+              <p style={{ fontSize: "0.76rem", color: "var(--text-muted)", marginBottom: 10 }}>
+                Puede seleccionar más de una opción.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {CONTACTO_OPTIONS.map(({ val, label }) => {
+                  const active = form.s8_contacto.includes(val);
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => toggleContacto(val)}
+                      className={`check-option${active ? " active" : ""}`}
+                    >
+                      <span className="check-box">
+                        {active && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <hr className="q-divider" style={{ margin: "4px 0" }} />
+
+            {/* Apoyo reportes */}
+            <div>
+              <p className="q-label">
+                ¿Le gustaría tener a una persona del equipo que lo apoye en la descarga de los reportes de ventas mes a mes?{" "}
+                <span style={{ color: "var(--accent)" }}>*</span>
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {([{ val: "si", label: "Sí" }, { val: "no", label: "No" }] as const).map(({ val, label }) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => set("s9_apoyo_reportes", val)}
+                    className={`radio-option${form.s9_apoyo_reportes === val ? " active" : ""}`}
+                  >
+                    <span className="radio-dot">
+                      {form.s9_apoyo_reportes === val && <span className="radio-dot-inner" />}
+                    </span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
 

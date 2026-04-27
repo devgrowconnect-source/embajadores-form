@@ -65,6 +65,10 @@ function buildEmailHtml(data: Record<string, unknown>): string {
         row("¿Qué mejoraría?", data.s7_2 || "—") +
         row("Otros comentarios", data.s7_3 || "—")
       )}
+      ${section("8. Preferencias de atención",
+        row("Canal de atención preferido", Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") || "—" : "—") +
+        row("¿Apoyo en descarga de reportes?", data.s9_apoyo_reportes === "si" ? "Sí" : data.s9_apoyo_reportes === "no" ? "No" : "—")
+      )}
     </table>
 
     <div style="padding:16px 24px;background:#f8f8f8;border-top:1px solid #eee">
