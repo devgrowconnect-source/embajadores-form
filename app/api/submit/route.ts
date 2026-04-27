@@ -1,5 +1,6 @@
 import { put } from "@vercel/blob";
 import { Resend } from "resend";
+import { google } from "googleapis";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -14,6 +15,48 @@ const SAT_LABEL: Record<number, string> = {
   4: "Satisfecho", 5: "Muy satisfecho",
 };
 
+// ── Google Sheets ──────────────────────────────────────────────────────────
+async function appendToSheet(data: Record<string, unknown>) {
+  if (
+    !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
+    !process.env.GOOGLE_PRIVATE_KEY ||
+    !process.env.GOOGLE_SHEET_ID
+  ) return null;
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    },
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const row = [
+    new Date(data.fechaEnvio as string).toLocaleString("es-CO"),
+    PARTICIPANTE_LABEL[data.participante as string] ?? data.participante,
+    data.s2_1, data.s2_2, data.s2_3,
+    data.s3_1, data.s3_2, data.s3_3,
+    data.s4_1, data.s4_2, data.s4_3,
+    data.s5_1, data.s5_2, data.s5_3,
+    SAT_LABEL[data.s6_satisfaccion as number] ?? data.s6_satisfaccion,
+    data.s7_1 || "",
+    data.s7_2 || "",
+    data.s7_3 || "",
+    Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") : "",
+    data.s9_apoyo_reportes === "si" ? "Sí" : "No",
+  ];
+
+  return sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.GOOGLE_SHEET_ID,
+    range: "Respuestas!A:T",
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: [row] },
+  });
+}
+
+// ── Email HTML ─────────────────────────────────────────────────────────────
 function buildEmailHtml(data: Record<string, unknown>): string {
   const row = (label: string, value: unknown) =>
     `<tr><td style="padding:8px 12px;color:#555;font-size:13px;border-bottom:1px solid #eee;width:60%">${label}</td><td style="padding:8px 12px;font-weight:600;font-size:13px;border-bottom:1px solid #eee">${value}</td></tr>`;
@@ -79,11 +122,13 @@ function buildEmailHtml(data: Record<string, unknown>): string {
 </html>`;
 }
 
+// ── Handler ────────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
   try {
     const data = await req.json();
+
     const results = await Promise.allSettled([
-      // ── Vercel Blob ──
+      // Vercel Blob
       process.env.BLOB_READ_WRITE_TOKEN
         ? put(`respuesta-${Date.now()}.json`, JSON.stringify(data, null, 2), {
             access: "public",
@@ -92,7 +137,7 @@ export async function POST(req: Request) {
           })
         : Promise.resolve(null),
 
-      // ── Resend email ──
+      // Resend email
       process.env.RESEND_API_KEY && process.env.NOTIFICATION_EMAIL
         ? new Resend(process.env.RESEND_API_KEY).emails.send({
             from: "Encuesta Plan Embajadores <onboarding@resend.dev>",
@@ -101,6 +146,9 @@ export async function POST(req: Request) {
             html: buildEmailHtml(data),
           })
         : Promise.resolve(null),
+
+      // Google Sheets
+      appendToSheet(data),
     ]);
 
     const failed = results.filter((r) => r.status === "rejected");
