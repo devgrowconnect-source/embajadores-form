@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${dmSans.variable} h-full`}>
-      <body className="min-h-full flex flex-col antialiased" style={{ fontFamily: "var(--font-dm), system-ui, sans-serif" }}>
+    <html lang="es" suppressHydrationWarning className={`${dmSans.variable} h-full`}>
+      <body suppressHydrationWarning className="min-h-full flex flex-col antialiased" style={{ fontFamily: "var(--font-dm), system-ui, sans-serif" }}>
         {children}
       </body>
     </html>

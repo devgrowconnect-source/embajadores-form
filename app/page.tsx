@@ -345,19 +345,19 @@ export default function EncuestaPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div>
               <p className="q-label">¿Qué es lo que más le gusta del Plan Embajadores? <span style={{ color: "var(--accent)" }}>*</span></p>
-              <textarea className="open-textarea" placeholder="Escriba su respuesta aquí..."
+              <textarea suppressHydrationWarning className="open-textarea" placeholder="Escriba su respuesta aquí..."
                 value={form.s7_1} onChange={(e) => set("s7_1", e.target.value)} maxLength={500} />
               <CharCount value={form.s7_1} />
             </div>
             <div>
               <p className="q-label">¿Qué aspectos cree que deberíamos mejorar? <span style={{ color: "var(--accent)" }}>*</span></p>
-              <textarea className="open-textarea" placeholder="Escriba su respuesta aquí..."
+              <textarea suppressHydrationWarning className="open-textarea" placeholder="Escriba su respuesta aquí..."
                 value={form.s7_2} onChange={(e) => set("s7_2", e.target.value)} maxLength={500} />
               <CharCount value={form.s7_2} />
             </div>
             <div>
               <p className="q-label">Otros comentarios o sugerencias <span style={{ color: "var(--accent)" }}>*</span></p>
-              <textarea className="open-textarea" placeholder="Escriba su respuesta aquí..."
+              <textarea suppressHydrationWarning className="open-textarea" placeholder="Escriba su respuesta aquí..."
                 value={form.s7_3} onChange={(e) => set("s7_3", e.target.value)} maxLength={500} />
               <CharCount value={form.s7_3} />
             </div>

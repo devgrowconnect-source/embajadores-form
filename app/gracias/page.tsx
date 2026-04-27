@@ -16,16 +16,24 @@ export default function GraciasPage() {
 
       {/* Content */}
       <div className="slide-up" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", textAlign: "center" }}>
-        {/* Check icon */}
-        <div style={{
-          width: 72, height: 72, background: "#E8FBF2",
-          border: "2px solid var(--accent)", display: "flex",
-          alignItems: "center", justifyContent: "center", marginBottom: 28,
-        }}>
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <path d="M8 19L15 26L28 11" stroke="#00C46E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        {/* Check icon — circle style from Figma */}
+        <svg
+          width="72"
+          height="72"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ marginBottom: 28 }}
+        >
+          <circle cx="12" cy="12" r="12" fill="#00C46E" />
+          <path
+            d="M8.5 12l2.5 2.5L16.5 9"
+            stroke="#ffffff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
 
         <p style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
           Encuesta completada
