@@ -11,6 +11,9 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Encuesta de Satisfacción – Plan Embajadores",
   description: "Encuesta de satisfacción del Plan Embajadores · Conquistando el Punto de Venta",
+  icons: {
+    icon: [{ url: "/icon.jpeg", type: "image/jpeg" }],
+  },
   openGraph: {
     title: "Encuesta de Satisfacción – Plan Embajadores",
     description: "Conquistando el Punto de Venta",
