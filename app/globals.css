@@ -17,6 +17,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { scroll-padding-top: 72px; }
+
 body {
   background-color: var(--page-bg);
   color: var(--text-dark);
@@ -221,6 +223,39 @@ body {
   border: none;
   border-top: 1px solid var(--border-light);
   margin: 14px 0;
+}
+
+/* Section title row with completion check */
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.section-title-row .section-title { margin-bottom: 0; }
+
+/* Card error state */
+.card--error {
+  border-color: #FECACA;
+  border-left: 3px solid #EF4444;
+}
+
+/* Character counter */
+.char-count {
+  text-align: right;
+  font-size: 0.7rem;
+  color: var(--text-light);
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Gracias slide-up animation */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(36px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-up {
+  animation: slideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Checkbox multi-select options */

@@ -15,7 +15,7 @@ export default function GraciasPage() {
       </nav>
 
       {/* Content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", textAlign: "center" }}>
+      <div className="slide-up" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", textAlign: "center" }}>
         {/* Check icon */}
         <div style={{
           width: 72, height: 72, background: "#E8FBF2",

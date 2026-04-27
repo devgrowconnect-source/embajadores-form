@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 type FormData = {
@@ -48,12 +48,8 @@ function RatingScale({ value, onChange }: { value: number; onChange: (v: number)
     <div className="rating-row">
       <span className="rating-tag">Malo</span>
       {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          className={`rating-btn${value === n ? " active" : ""}`}
-        >
+        <button key={n} type="button" onClick={() => onChange(n)}
+          className={`rating-btn${value === n ? " active" : ""}`}>
           {n}
         </button>
       ))}
@@ -71,10 +67,30 @@ function Question({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
+function SectionTitle({ title, complete }: { title: string; complete: boolean }) {
+  return (
+    <div className="section-title-row">
+      <p className="section-title">{title}</p>
+      {complete && (
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="8.5" cy="8.5" r="8" stroke="var(--accent)" />
+          <path d="M5.5 8.8L7.5 10.8L11.5 6.2" stroke="var(--accent)" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function CharCount({ value, max = 500 }: { value: string; max?: number }) {
+  return <p className="char-count">{value.length} / {max}</p>;
+}
+
 export default function EncuestaPage() {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
   const router = useRouter();
 
   const set = useCallback(<K extends keyof FormData>(key: K, val: FormData[K]) => {
@@ -90,35 +106,75 @@ export default function EncuestaPage() {
     }));
   }, []);
 
+  // Section completion flags
+  const c1 = form.participante !== "";
+  const c2 = form.s2_1 > 0 && form.s2_2 > 0 && form.s2_3 > 0;
+  const c3 = form.s3_1 > 0 && form.s3_2 > 0 && form.s3_3 > 0;
+  const c4 = form.s4_1 > 0 && form.s4_2 > 0 && form.s4_3 > 0;
+  const c5 = form.s5_1 > 0 && form.s5_2 > 0 && form.s5_3 > 0;
+  const c6 = form.s6_satisfaccion > 0;
+  const c7 = form.s7_1.trim() !== "" && form.s7_2.trim() !== "" && form.s7_3.trim() !== "";
+  const c8 = form.s8_contacto.length > 0 && form.s9_apoyo_reportes !== "";
+
   const requiredRatings: (keyof FormData)[] = [
     "s2_1","s2_2","s2_3","s3_1","s3_2","s3_3",
     "s4_1","s4_2","s4_3","s5_1","s5_2","s5_3","s6_satisfaccion",
   ];
 
-  const totalRequired = requiredRatings.length + 3; // participante + s8 + s9
+  const totalRequired = requiredRatings.length + 3;
   const filled =
-    (form.participante !== "" ? 1 : 0) +
+    (c1 ? 1 : 0) +
     requiredRatings.filter((k) => (form[k] as number) > 0).length +
     (form.s8_contacto.length > 0 ? 1 : 0) +
     (form.s9_apoyo_reportes !== "" ? 1 : 0);
   const progress = Math.round((filled / totalRequired) * 100);
 
-  const isValid =
-    form.participante !== "" &&
-    requiredRatings.every((k) => (form[k] as number) > 0) &&
-    form.s7_1.trim() !== "" &&
-    form.s7_2.trim() !== "" &&
-    form.s7_3.trim() !== "" &&
-    form.s8_contacto.length > 0 &&
-    form.s9_apoyo_reportes !== "";
+  const isValid = c1 && c2 && c3 && c4 && c5 && c6 && c7 && c8;
+
+  // Auto-scroll to next section when a section is completed
+  const prev = useRef({ c1, c2, c3, c4, c5, c6, c7, c8 });
+  useEffect(() => {
+    const pairs: [boolean, boolean, number][] = [
+      [c1, prev.current.c1, 2],
+      [c2, prev.current.c2, 3],
+      [c3, prev.current.c3, 4],
+      [c4, prev.current.c4, 5],
+      [c5, prev.current.c5, 6],
+      [c6, prev.current.c6, 7],
+      [c7, prev.current.c7, 8],
+    ];
+    for (const [curr, was, nextId] of pairs) {
+      if (curr && !was) {
+        const el = document.getElementById(`section-${nextId}`);
+        if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 130);
+        break;
+      }
+    }
+    prev.current = { c1, c2, c3, c4, c5, c6, c7, c8 };
+  }, [c1, c2, c3, c4, c5, c6, c7, c8]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isValid) {
+      setShowErrors(true);
       setError("Por favor completa tu perfil, todas las calificaciones y los comentarios adicionales.");
+      const incomplete = [
+        { id: "section-1", ok: c1 },
+        { id: "section-2", ok: c2 },
+        { id: "section-3", ok: c3 },
+        { id: "section-4", ok: c4 },
+        { id: "section-5", ok: c5 },
+        { id: "section-6", ok: c6 },
+        { id: "section-7", ok: c7 },
+        { id: "section-8", ok: c8 },
+      ].find((s) => !s.ok);
+      if (incomplete) {
+        document.getElementById(incomplete.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
       return;
     }
     setError("");
+    setShowErrors(false);
     setSubmitting(true);
     try {
       const res = await fetch("/api/submit", {
@@ -134,6 +190,8 @@ export default function EncuestaPage() {
     }
   }
 
+  const card = (ok: boolean) => `card${showErrors && !ok ? " card--error" : ""}`;
+
   return (
     <main style={{ background: "var(--page-bg)", minHeight: "100vh" }}>
 
@@ -145,16 +203,8 @@ export default function EncuestaPage() {
             PLAN EMBAJADORES
           </span>
         </div>
-        {/* Progress bar */}
         <div style={{ height: 3, background: "rgba(255,255,255,0.1)" }}>
-          <div
-            style={{
-              height: "100%",
-              width: `${progress}%`,
-              background: "var(--accent)",
-              transition: "width 0.4s ease",
-            }}
-          />
+          <div style={{ height: "100%", width: `${progress}%`, background: "var(--accent)", transition: "width 0.4s ease" }} />
         </div>
       </nav>
 
@@ -174,20 +224,16 @@ export default function EncuestaPage() {
       >
 
         {/* ── 1. Perfil ── */}
-        <div className="card">
-          <p className="section-title">Perfil del participante</p>
+        <div id="section-1" className={card(c1)}>
+          <SectionTitle title="Perfil del participante" complete={c1} />
           <p className="section-sub">Seleccione su rol actual dentro del establecimiento.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {([
               { val: "dueno", label: "Dueño / Administrador" },
               { val: "dependiente", label: "Dependiente" },
             ] as const).map(({ val, label }) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => set("participante", val)}
-                className={`radio-option${form.participante === val ? " active" : ""}`}
-              >
+              <button key={val} type="button" onClick={() => set("participante", val)}
+                className={`radio-option${form.participante === val ? " active" : ""}`}>
                 <span className="radio-dot">
                   {form.participante === val && <span className="radio-dot-inner" />}
                 </span>
@@ -198,8 +244,8 @@ export default function EncuestaPage() {
         </div>
 
         {/* ── 2. Presentación ── */}
-        <div className="card">
-          <p className="section-title">Presentación y mecánica del plan</p>
+        <div id="section-2" className={card(c2)}>
+          <SectionTitle title="Presentación y mecánica del plan" complete={c2} />
           <p className="section-sub">Califique de 1 (Malo) a 5 (Excelente) los siguientes aspectos.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             <Question label="¿Qué tan clara fue la explicación inicial del plan?">
@@ -217,8 +263,8 @@ export default function EncuestaPage() {
         </div>
 
         {/* ── 3. Equipo ── */}
-        <div className="card">
-          <p className="section-title">Equipo y acompañamiento</p>
+        <div id="section-3" className={card(c3)}>
+          <SectionTitle title="Equipo y acompañamiento" complete={c3} />
           <p className="section-sub">Califique de 1 (Malo) a 5 (Excelente) el soporte recibido.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             <Question label="Disponibilidad de su asesor asignado">
@@ -236,8 +282,8 @@ export default function EncuestaPage() {
         </div>
 
         {/* ── 4. Comunicación ── */}
-        <div className="card">
-          <p className="section-title">Comunicación y gestión</p>
+        <div id="section-4" className={card(c4)}>
+          <SectionTitle title="Comunicación y gestión" complete={c4} />
           <p className="section-sub">Frecuencia y calidad de la información compartida.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             <Question label="¿Recibe la información sobre cambios y novedades a tiempo?">
@@ -255,8 +301,8 @@ export default function EncuestaPage() {
         </div>
 
         {/* ── 5. Pagos ── */}
-        <div className="card">
-          <p className="section-title">Pagos e incentivos</p>
+        <div id="section-5" className={card(c5)}>
+          <SectionTitle title="Pagos e incentivos" complete={c5} />
           <p className="section-sub">Evaluación de la puntualidad y monto de incentivos.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             <Question label="Cumplimiento en los pagos">
@@ -274,8 +320,8 @@ export default function EncuestaPage() {
         </div>
 
         {/* ── 6. Impacto ── */}
-        <div className="card">
-          <p className="section-title">Impacto del plan</p>
+        <div id="section-6" className={card(c6)}>
+          <SectionTitle title="Impacto del plan" complete={c6} />
           <p className="section-sub">Nivel de satisfacción general con el programa.</p>
           <div className="sat-bar" />
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -284,12 +330,8 @@ export default function EncuestaPage() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {SAT_OPTIONS.map(({ val, label }) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => set("s6_satisfaccion", val)}
-                className={`sat-option${form.s6_satisfaccion === val ? " active" : ""}`}
-              >
+              <button key={val} type="button" onClick={() => set("s6_satisfaccion", val)}
+                className={`sat-option${form.s6_satisfaccion === val ? " active" : ""}`}>
                 {label}
               </button>
             ))}
@@ -297,47 +339,37 @@ export default function EncuestaPage() {
         </div>
 
         {/* ── 7. Abiertas ── */}
-        <div className="card">
-          <p className="section-title">Comentarios adicionales</p>
+        <div id="section-7" className={card(c7)}>
+          <SectionTitle title="Comentarios adicionales" complete={c7} />
           <p className="section-sub">Sus sugerencias nos ayudan a mejorar continuamente.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div>
               <p className="q-label">¿Qué es lo que más le gusta del Plan Embajadores? <span style={{ color: "var(--accent)" }}>*</span></p>
-              <textarea
-                className="open-textarea"
-                placeholder="Escriba su respuesta aquí..."
-                value={form.s7_1}
-                onChange={(e) => set("s7_1", e.target.value)}
-              />
+              <textarea className="open-textarea" placeholder="Escriba su respuesta aquí..."
+                value={form.s7_1} onChange={(e) => set("s7_1", e.target.value)} maxLength={500} />
+              <CharCount value={form.s7_1} />
             </div>
             <div>
               <p className="q-label">¿Qué aspectos cree que deberíamos mejorar? <span style={{ color: "var(--accent)" }}>*</span></p>
-              <textarea
-                className="open-textarea"
-                placeholder="Escriba su respuesta aquí..."
-                value={form.s7_2}
-                onChange={(e) => set("s7_2", e.target.value)}
-              />
+              <textarea className="open-textarea" placeholder="Escriba su respuesta aquí..."
+                value={form.s7_2} onChange={(e) => set("s7_2", e.target.value)} maxLength={500} />
+              <CharCount value={form.s7_2} />
             </div>
             <div>
               <p className="q-label">Otros comentarios o sugerencias <span style={{ color: "var(--accent)" }}>*</span></p>
-              <textarea
-                className="open-textarea"
-                placeholder="Escriba su respuesta aquí..."
-                value={form.s7_3}
-                onChange={(e) => set("s7_3", e.target.value)}
-              />
+              <textarea className="open-textarea" placeholder="Escriba su respuesta aquí..."
+                value={form.s7_3} onChange={(e) => set("s7_3", e.target.value)} maxLength={500} />
+              <CharCount value={form.s7_3} />
             </div>
           </div>
         </div>
 
         {/* ── 8. Preferencias ── */}
-        <div className="card">
-          <p className="section-title">Preferencias de atención</p>
+        <div id="section-8" className={card(c8)}>
+          <SectionTitle title="Preferencias de atención" complete={c8} />
           <p className="section-sub">Ayúdenos a mejorar la forma en que nos comunicamos con usted.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
-            {/* Canal de atención */}
             <div>
               <p className="q-label">
                 ¿Por qué medio le gustaría recibir la atención del plan?{" "}
@@ -350,12 +382,8 @@ export default function EncuestaPage() {
                 {CONTACTO_OPTIONS.map(({ val, label }) => {
                   const active = form.s8_contacto.includes(val);
                   return (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => toggleContacto(val)}
-                      className={`check-option${active ? " active" : ""}`}
-                    >
+                    <button key={val} type="button" onClick={() => toggleContacto(val)}
+                      className={`check-option${active ? " active" : ""}`}>
                       <span className="check-box">
                         {active && (
                           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -372,7 +400,6 @@ export default function EncuestaPage() {
 
             <hr className="q-divider" style={{ margin: "4px 0" }} />
 
-            {/* Apoyo reportes */}
             <div>
               <p className="q-label">
                 ¿Le gustaría tener a una persona del equipo que lo apoye en la descarga de los reportes de ventas mes a mes?{" "}
@@ -380,12 +407,8 @@ export default function EncuestaPage() {
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {([{ val: "si", label: "Sí" }, { val: "no", label: "No" }] as const).map(({ val, label }) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => set("s9_apoyo_reportes", val)}
-                    className={`radio-option${form.s9_apoyo_reportes === val ? " active" : ""}`}
-                  >
+                  <button key={val} type="button" onClick={() => set("s9_apoyo_reportes", val)}
+                    className={`radio-option${form.s9_apoyo_reportes === val ? " active" : ""}`}>
                     <span className="radio-dot">
                       {form.s9_apoyo_reportes === val && <span className="radio-dot-inner" />}
                     </span>
