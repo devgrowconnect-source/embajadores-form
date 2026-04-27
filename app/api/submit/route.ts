@@ -1,6 +1,5 @@
 import { put } from "@vercel/blob";
 import { Resend } from "resend";
-import { google } from "googleapis";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -15,45 +14,52 @@ const SAT_LABEL: Record<number, string> = {
   4: "Satisfecho", 5: "Muy satisfecho",
 };
 
-// ── Google Sheets ──────────────────────────────────────────────────────────
-async function appendToSheet(data: Record<string, unknown>) {
-  if (
-    !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
-    !process.env.GOOGLE_PRIVATE_KEY ||
-    !process.env.GOOGLE_SHEET_ID
-  ) return null;
+// ── Airtable ───────────────────────────────────────────────────────────────
+async function appendToAirtable(data: Record<string, unknown>) {
+  if (!process.env.AIRTABLE_API_TOKEN || !process.env.AIRTABLE_BASE_ID) return null;
 
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    },
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  });
+  const table = process.env.AIRTABLE_TABLE_NAME ?? "Respuestas";
 
-  const sheets = google.sheets({ version: "v4", auth });
+  const fields = {
+    "Fecha":                 new Date(data.fechaEnvio as string).toLocaleString("es-CO"),
+    "Participante":          PARTICIPANTE_LABEL[data.participante as string] ?? String(data.participante),
+    "Claridad plan":         Number(data.s2_1),
+    "Facilidad participar":  Number(data.s2_2),
+    "Comprensión reglas":    Number(data.s2_3),
+    "Disponibilidad asesor": Number(data.s3_1),
+    "Exp. coordinador":      Number(data.s3_2),
+    "Calidad servicio":      Number(data.s3_3),
+    "Info a tiempo":         Number(data.s4_1),
+    "Frec. comunicación":    Number(data.s4_2),
+    "Resolución dudas":      Number(data.s4_3),
+    "Cumplimiento pagos":    Number(data.s5_1),
+    "Claridad liquidación":  Number(data.s5_2),
+    "Atractivo incentivos":  Number(data.s5_3),
+    "Satisfacción general":  SAT_LABEL[data.s6_satisfaccion as number] ?? String(data.s6_satisfaccion),
+    "¿Qué le gusta?":        String(data.s7_1 ?? ""),
+    "¿Qué mejoraría?":       String(data.s7_2 ?? ""),
+    "Otros comentarios":     String(data.s7_3 ?? ""),
+    "Canal preferido":       Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") : "",
+    "Apoyo reportes":        data.s9_apoyo_reportes === "si" ? "Sí" : "No",
+  };
 
-  const row = [
-    new Date(data.fechaEnvio as string).toLocaleString("es-CO"),
-    PARTICIPANTE_LABEL[data.participante as string] ?? data.participante,
-    data.s2_1, data.s2_2, data.s2_3,
-    data.s3_1, data.s3_2, data.s3_3,
-    data.s4_1, data.s4_2, data.s4_3,
-    data.s5_1, data.s5_2, data.s5_3,
-    SAT_LABEL[data.s6_satisfaccion as number] ?? data.s6_satisfaccion,
-    data.s7_1 || "",
-    data.s7_2 || "",
-    data.s7_3 || "",
-    Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") : "",
-    data.s9_apoyo_reportes === "si" ? "Sí" : "No",
-  ];
+  const res = await fetch(
+    `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.AIRTABLE_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fields }),
+    }
+  );
 
-  return sheets.spreadsheets.values.append({
-    spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: "Respuestas!A:T",
-    valueInputOption: "USER_ENTERED",
-    requestBody: { values: [row] },
-  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Airtable: ${JSON.stringify(err)}`);
+  }
+  return res.json();
 }
 
 // ── Email HTML ─────────────────────────────────────────────────────────────
@@ -70,14 +76,11 @@ function buildEmailHtml(data: Record<string, unknown>): string {
 <head><meta charset="utf-8"></head>
 <body style="font-family:system-ui,sans-serif;background:#f0f0f0;padding:32px 16px;margin:0">
   <div style="max-width:580px;margin:0 auto;background:#fff;border:1px solid #ddd">
-    <div style="background:#0B1929;padding:20px 24px;display:flex;align-items:center;gap:12px">
-      <div>
-        <p style="color:#00C46E;font-size:11px;font-weight:700;letter-spacing:.08em;margin:0 0 4px">NUEVA RESPUESTA</p>
-        <p style="color:#fff;font-weight:700;font-size:16px;margin:0">Encuesta de Satisfacción</p>
-        <p style="color:#4a7a9b;font-size:12px;margin:4px 0 0">Plan Embajadores · ${new Date(data.fechaEnvio as string).toLocaleString("es-CO")}</p>
-      </div>
+    <div style="background:#0B1929;padding:20px 24px">
+      <p style="color:#00C46E;font-size:11px;font-weight:700;letter-spacing:.08em;margin:0 0 4px">NUEVA RESPUESTA</p>
+      <p style="color:#fff;font-weight:700;font-size:16px;margin:0">Encuesta de Satisfacción</p>
+      <p style="color:#4a7a9b;font-size:12px;margin:4px 0 0">Plan Embajadores · ${new Date(data.fechaEnvio as string).toLocaleString("es-CO")}</p>
     </div>
-
     <table style="width:100%;border-collapse:collapse">
       ${section("1. Perfil", row("Tipo de participante", PARTICIPANTE_LABEL[data.participante as string] ?? data.participante))}
       ${section("2. Presentación y mecánica del plan",
@@ -109,11 +112,10 @@ function buildEmailHtml(data: Record<string, unknown>): string {
         row("Otros comentarios", data.s7_3 || "—")
       )}
       ${section("8. Preferencias de atención",
-        row("Canal de atención preferido", Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") || "—" : "—") +
-        row("¿Apoyo en descarga de reportes?", data.s9_apoyo_reportes === "si" ? "Sí" : data.s9_apoyo_reportes === "no" ? "No" : "—")
+        row("Canal preferido", Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") || "—" : "—") +
+        row("¿Apoyo en reportes?", data.s9_apoyo_reportes === "si" ? "Sí" : "No")
       )}
     </table>
-
     <div style="padding:16px 24px;background:#f8f8f8;border-top:1px solid #eee">
       <p style="color:#aaa;font-size:11px;margin:0">© 2025 Plan Embajadores · Enviado automáticamente</p>
     </div>
@@ -147,8 +149,8 @@ export async function POST(req: Request) {
           })
         : Promise.resolve(null),
 
-      // Google Sheets
-      appendToSheet(data),
+      // Airtable
+      appendToAirtable(data),
     ]);
 
     const failed = results.filter((r) => r.status === "rejected");
