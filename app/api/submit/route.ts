@@ -18,37 +18,41 @@ const SAT_LABEL: Record<number, string> = {
 async function appendToAirtable(data: Record<string, unknown>) {
   if (!process.env.AIRTABLE_API_TOKEN || !process.env.AIRTABLE_BASE_ID) return null;
 
-  const table = process.env.AIRTABLE_TABLE_NAME ?? "Respuestas";
+  const baseId = process.env.AIRTABLE_BASE_ID.trim();
+  const table  = (process.env.AIRTABLE_TABLE_NAME ?? "Respuestas").trim();
+  const token  = process.env.AIRTABLE_API_TOKEN.trim();
 
   const fields = {
-    "Fecha":                 new Date(data.fechaEnvio as string).toLocaleString("es-CO"),
-    "Participante":          PARTICIPANTE_LABEL[data.participante as string] ?? String(data.participante),
-    "Claridad plan":         Number(data.s2_1),
-    "Facilidad participar":  Number(data.s2_2),
-    "Comprensión reglas":    Number(data.s2_3),
-    "Disponibilidad asesor": Number(data.s3_1),
-    "Exp. coordinador":      Number(data.s3_2),
-    "Calidad servicio":      Number(data.s3_3),
-    "Info a tiempo":         Number(data.s4_1),
-    "Frec. comunicación":    Number(data.s4_2),
-    "Resolución dudas":      Number(data.s4_3),
-    "Cumplimiento pagos":    Number(data.s5_1),
-    "Claridad liquidación":  Number(data.s5_2),
-    "Atractivo incentivos":  Number(data.s5_3),
-    "Satisfacción general":  SAT_LABEL[data.s6_satisfaccion as number] ?? String(data.s6_satisfaccion),
-    "¿Qué le gusta?":        String(data.s7_1 ?? ""),
-    "¿Qué mejoraría?":       String(data.s7_2 ?? ""),
-    "Otros comentarios":     String(data.s7_3 ?? ""),
-    "Canal preferido":       Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") : "",
-    "Apoyo reportes":        data.s9_apoyo_reportes === "si" ? "Sí" : "No",
+    "Fecha":                   new Date(data.fechaEnvio as string).toISOString().split("T")[0],
+    "Participante":            PARTICIPANTE_LABEL[data.participante as string] ?? String(data.participante),
+    "Nombre":                  String(data.nombre ?? ""),
+    "Nombre Droguería":        String(data.nombreDrogueria ?? ""),
+    "Claridad plan":           Number(data.s2_1),
+    "Facilidad participar":    Number(data.s2_2),
+    "Comprensión reglas":      Number(data.s2_3),
+    "Disponibilidad asesor":   Number(data.s3_1),
+    "Experiencia coordinador": Number(data.s3_2),
+    "Calidad servicio":        Number(data.s3_3),
+    "Info a tiempo":           Number(data.s4_1),
+    "Frec. comunicación":      Number(data.s4_2),
+    "Resolución dudas":        Number(data.s4_3),
+    "Cumplimiento pagos":      Number(data.s5_1),
+    "Claridad liquidación":    Number(data.s5_2),
+    "Atractivo incentivos":    Number(data.s5_3),
+    "Satisfacción general":    SAT_LABEL[data.s6_satisfaccion as number] ?? String(data.s6_satisfaccion),
+    "¿Qué le gusta?":          String(data.s7_1 ?? ""),
+    "¿Qué mejoraría?":         String(data.s7_2 ?? ""),
+    "Otros comentarios":       String(data.s7_3 ?? ""),
+    "Canal preferido":         Array.isArray(data.s8_contacto) ? (data.s8_contacto as string[]).join(", ") : "",
+    "Apoyo reportes":          data.s9_apoyo_reportes === "si" ? 1 : 0,
   };
 
   const res = await fetch(
-    `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`,
+    `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.AIRTABLE_API_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ fields }),
@@ -82,7 +86,11 @@ function buildEmailHtml(data: Record<string, unknown>): string {
       <p style="color:#4a7a9b;font-size:12px;margin:4px 0 0">Plan Embajadores · ${new Date(data.fechaEnvio as string).toLocaleString("es-CO")}</p>
     </div>
     <table style="width:100%;border-collapse:collapse">
-      ${section("1. Perfil", row("Tipo de participante", PARTICIPANTE_LABEL[data.participante as string] ?? data.participante))}
+      ${section("1. Perfil",
+        row("Tipo de participante", PARTICIPANTE_LABEL[data.participante as string] ?? data.participante) +
+        row("Nombre", data.nombre || "—") +
+        row("Nombre Droguería", data.nombreDrogueria || "—")
+      )}
       ${section("2. Presentación y mecánica del plan",
         row("Claridad en la explicación", `${data.s2_1} / 5`) +
         row("Facilidad para participar", `${data.s2_2} / 5`) +
@@ -133,7 +141,7 @@ export async function POST(req: Request) {
       // Vercel Blob
       process.env.BLOB_READ_WRITE_TOKEN
         ? put(`respuesta-${Date.now()}.json`, JSON.stringify(data, null, 2), {
-            access: "public",
+            access: "private",
             contentType: "application/json",
             addRandomSuffix: false,
           })
@@ -153,10 +161,15 @@ export async function POST(req: Request) {
       appendToAirtable(data),
     ]);
 
-    const failed = results.filter((r) => r.status === "rejected");
-    if (failed.length > 0) {
-      failed.forEach((r) => console.error("submit partial error:", (r as PromiseRejectedResult).reason));
-    }
+    const labels = ["blob", "email", "airtable"];
+    results.forEach((r, i) => {
+      if (r.status === "rejected") {
+        const err = (r as PromiseRejectedResult).reason;
+        console.error(`submit error [${labels[i]}]: msg=${err?.message} | stack=${err?.stack?.slice(0, 300)}`);
+      } else {
+        console.log(`submit ok [${labels[i]}]`);
+      }
+    });
 
     return NextResponse.json({ ok: true });
   } catch (err) {

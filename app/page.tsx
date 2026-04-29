@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 
 type FormData = {
   participante: "" | "dueno" | "dependiente";
+  nombre: string;
+  nombreDrogueria: string;
   s2_1: number; s2_2: number; s2_3: number;
   s3_1: number; s3_2: number; s3_3: number;
   s4_1: number; s4_2: number; s4_3: number;
@@ -18,6 +20,8 @@ type FormData = {
 
 const INITIAL: FormData = {
   participante: "",
+  nombre: "",
+  nombreDrogueria: "",
   s2_1: 0, s2_2: 0, s2_3: 0,
   s3_1: 0, s3_2: 0, s3_3: 0,
   s4_1: 0, s4_2: 0, s4_3: 0,
@@ -106,8 +110,13 @@ export default function EncuestaPage() {
     }));
   }, []);
 
+  const handleNombre = useCallback((raw: string) => {
+    const cleaned = raw.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s'-]/g, "");
+    set("nombre", cleaned);
+  }, [set]);
+
   // Section completion flags
-  const c1 = form.participante !== "";
+  const c1 = form.participante !== "" && form.nombre.trim().length >= 2 && form.nombreDrogueria.trim().length >= 2;
   const c2 = form.s2_1 > 0 && form.s2_2 > 0 && form.s2_3 > 0;
   const c3 = form.s3_1 > 0 && form.s3_2 > 0 && form.s3_3 > 0;
   const c4 = form.s4_1 > 0 && form.s4_2 > 0 && form.s4_3 > 0;
@@ -135,7 +144,7 @@ export default function EncuestaPage() {
   const prev = useRef({ c1, c2, c3, c4, c5, c6, c7, c8 });
   useEffect(() => {
     const pairs: [boolean, boolean, number][] = [
-      [c1, prev.current.c1, 2],
+      // c1 intentionally omitted — nombre field is in section 1 and auto-scroll interrupts typing
       [c2, prev.current.c2, 3],
       [c3, prev.current.c3, 4],
       [c4, prev.current.c4, 5],
@@ -241,6 +250,55 @@ export default function EncuestaPage() {
               </button>
             ))}
           </div>
+
+          {form.participante !== "" && (
+            <div style={{ marginTop: 16 }}>
+              <p className="q-label">
+                Nombre del {form.participante === "dueno" ? "Dueño / Administrador" : "Dependiente"}
+                {" "}<span style={{ color: "var(--accent)" }}>*</span>
+              </p>
+              <input
+                type="text"
+                style={{
+                  width: "100%", background: "#F5F5F5", border: "1px solid var(--border)",
+                  padding: "12px 14px", color: "var(--text-dark)", fontSize: "0.88rem",
+                  fontFamily: "inherit", outline: "none",
+                  borderColor: showErrors && form.nombre.trim().length < 2 ? "#EF4444" : undefined,
+                  transition: "border-color 0.12s",
+                }}
+                placeholder="Ingrese su nombre completo"
+                value={form.nombre}
+                onChange={(e) => handleNombre(e.target.value)}
+                maxLength={60}
+                onFocus={(e) => (e.target.style.background = "#fff")}
+                onBlur={(e) => (e.target.style.background = form.nombre ? "#fff" : "#F5F5F5")}
+              />
+              <p className="char-count">{form.nombre.length} / 60</p>
+
+              <div style={{ marginTop: 14 }}>
+                <p className="q-label">
+                  Nombre de la Droguería o Cadena{" "}<span style={{ color: "var(--accent)" }}>*</span>
+                </p>
+                <input
+                  type="text"
+                  style={{
+                    width: "100%", background: "#F5F5F5", border: "1px solid var(--border)",
+                    padding: "12px 14px", color: "var(--text-dark)", fontSize: "0.88rem",
+                    fontFamily: "inherit", outline: "none",
+                    borderColor: showErrors && form.nombreDrogueria.trim().length < 2 ? "#EF4444" : undefined,
+                    transition: "border-color 0.12s",
+                  }}
+                  placeholder="Ingrese el nombre de la droguería o cadena"
+                  value={form.nombreDrogueria}
+                  onChange={(e) => set("nombreDrogueria", e.target.value)}
+                  maxLength={80}
+                  onFocus={(e) => (e.target.style.background = "#fff")}
+                  onBlur={(e) => (e.target.style.background = form.nombreDrogueria ? "#fff" : "#F5F5F5")}
+                />
+                <p className="char-count">{form.nombreDrogueria.length} / 80</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── 2. Presentación ── */}
